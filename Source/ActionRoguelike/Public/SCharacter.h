@@ -14,7 +14,12 @@ UCLASS()
 class ACTIONROGUELIKE_API ASCharacter : public ACharacter
 {
 	GENERATED_BODY()
+protected:
 
+	// Assigns from a class, MagicProjectile derives AActor
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AActor> ProjectileClass;
+	
 public:
 	// Sets default values for this character's properties
 	ASCharacter();
@@ -33,6 +38,7 @@ protected:
 	// Movement functions
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	void PrimaryAttack();
 
 
 public:	

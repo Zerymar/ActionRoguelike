@@ -3,7 +3,9 @@
 
 #include "SCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+
 // Sets default values
 ASCharacter::ASCharacter()
 {
@@ -12,11 +14,24 @@ ASCharacter::ASCharacter()
 
 	// Attach the SCharacter to our SpringArmComponent
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>("SpringArmComp");
+
+	// Allows camera movement
+	SpringArmComp->bUsePawnControlRotation = true;
+
 	SpringArmComp->SetupAttachment(RootComponent);
 
 	// Attach the SpringArmComponent to our CameraComponent
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	//Allows for the camera to not always be locked? So it's not always strafing
+	// Allows orientation based on how the character is already moving, but based on camera
+	// See notes about "move in the direction relative to the acceleration"
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	// Action RPG Movement, character can look at camera
+	// Booleans start with `b`
+	bUseControllerRotationYaw = false;
 }
 
 // Called when the game starts or when spawned
@@ -28,21 +43,51 @@ void ASCharacter::BeginPlay()
 void ASCharacter::MoveForward(float Value)
 {
 	// Gets the vector pointing from the actor
-	/*
-	 *   OO
-	 *  \|/         Forward Vector 
-	 *   |          -------->
-	 *  /\
-	 *
-	 *
-	 */
-	AddMovementInput(GetActorForwardVector(), Value);
+	FRotator ControlRot = GetControlRotation();
+	// Want to be anchored to the ground
+	ControlRot.Pitch = 0.0f;
+	ControlRot.Roll = 0.0f;
+	
+	// Originally, we were getting the vector relative to the pawn
+	//AddMovementInput(GetActorForwardVector(), Value);
+	
+	// Relative to the camera
+	AddMovementInput(ControlRot.Vector(), Value);
 }
 
 void ASCharacter::MoveRight(float Value)
 {
-	AddMovementInput(GetActorRightVector(), Value);
+	FRotator ControlRot = GetControlRotation();
+	// Want to be anchored to the ground
+	ControlRot.Pitch = 0.0f;
+	ControlRot.Roll = 0.0f;
+	// Unreal
+	/*
+	 * X is forward (Red)
+	 * Y is right (Green)
+	 * Z is Up (Blue)
+	 */
+
+	// GetRightVector source code uses the rotation matrix
+	// Originally, getRightVector would give us relative to the Pawn
+	// Instead, we're going to apply the rotation matrix to the Control Rotation
+	FVector RightVector = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::Y);
+	AddMovementInput(RightVector, Value);
 }
+
+void ASCharacter::PrimaryAttack()
+{
+	// Gets the location of the hand to spawn the projectile
+	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	// Spawn relative to the control rotation and currently just spawn on the actor
+	FTransform SpawnTM = FTransform(GetControlRotation(),HandLocation );
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	
+	// Whenever we spawn, spawn to the world
+	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+}
+
 
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
@@ -61,5 +106,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+
+	// When pressed, call the function PrimaryAttack
+	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
 }
 
