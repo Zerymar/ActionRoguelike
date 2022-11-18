@@ -28,10 +28,14 @@ ASCharacter::ASCharacter()
 	// Allows orientation based on how the character is already moving, but based on camera
 	// See notes about "move in the direction relative to the acceleration"
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-
+	
 	// Action RPG Movement, character can look at camera
 	// Booleans start with `b`
 	bUseControllerRotationYaw = false;
+	bCharacterSprinting = false;
+
+	// Hold onto the standard speed
+	CharacterMaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 }
 
 // Called when the game starts or when spawned
@@ -55,6 +59,15 @@ void ASCharacter::MoveForward(float Value)
 	AddMovementInput(ControlRot.Vector(), Value);
 }
 
+// When sprinting, increase walk speed
+void ASCharacter::Sprint()
+{
+	this->bCharacterSprinting = !bCharacterSprinting;
+	GetCharacterMovement()->MaxWalkSpeed = bCharacterSprinting ?
+		CharacterMaxWalkSpeed * SprintMultiplier : CharacterMaxWalkSpeed;
+
+}
+
 void ASCharacter::MoveRight(float Value)
 {
 	FRotator ControlRot = GetControlRotation();
@@ -67,7 +80,8 @@ void ASCharacter::MoveRight(float Value)
 	 * Y is right (Green)
 	 * Z is Up (Blue)
 	 */
-
+	
+	
 	// GetRightVector source code uses the rotation matrix
 	// Originally, getRightVector would give us relative to the Pawn
 	// Instead, we're going to apply the rotation matrix to the Control Rotation
@@ -106,8 +120,16 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	
 
 	// When pressed, call the function PrimaryAttack
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+
+	//Allows the character to Jump
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
+
+	// Run Speed
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ASCharacter::Sprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ASCharacter::Sprint);
 }
 
