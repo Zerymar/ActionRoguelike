@@ -75,6 +75,20 @@ void ASCharacter::MoveRight(float Value)
 	AddMovementInput(RightVector, Value);
 }
 
+void ASCharacter::PrimaryAttack()
+{
+	// Gets the location of the hand to spawn the projectile
+	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	// Spawn relative to the control rotation and currently just spawn on the actor
+	FTransform SpawnTM = FTransform(GetControlRotation(),HandLocation );
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	
+	// Whenever we spawn, spawn to the world
+	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+}
+
+
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
 {
@@ -92,5 +106,8 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	
 	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+
+	// When pressed, call the function PrimaryAttack
+	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
 }
 

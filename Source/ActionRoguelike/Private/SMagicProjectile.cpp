@@ -15,6 +15,7 @@ ASMagicProjectile::ASMagicProjectile()
 
 	// Set up our components
 	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
+	SphereComp->SetCollisionProfileName("Projectile");
 	// Our Project will be our "sphere object" in the world
 	RootComponent = SphereComp;
 
