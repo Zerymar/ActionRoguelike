@@ -31,6 +31,14 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
+
+	bool bCharacterSprinting;
+
+	UPROPERTY(EditAnywhere)
+	float SprintMultiplier;
+
+	UPROPERTY(VisibleAnywhere)
+	float CharacterMaxWalkSpeed ;
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -38,6 +46,7 @@ protected:
 	// Movement functions
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	void Sprint();
 	void PrimaryAttack();
 
 
