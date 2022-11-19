@@ -8,6 +8,7 @@
 
 class UStaticMeshComponent;
 class URadialForceComponent;
+class UParticleSystemComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ASExplosiveBarrel : public AActor
@@ -25,6 +26,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	URadialForceComponent* RadialForceComp;
 	
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* EffectComp;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
