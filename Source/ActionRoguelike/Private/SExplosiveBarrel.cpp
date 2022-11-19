@@ -3,7 +3,9 @@
 
 #include "SExplosiveBarrel.h"
 
+#include "Particles/ParticleSystemComponent.h"
 #include "PhysicsEngine/RadialForceComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -23,7 +25,9 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 	RadialForceComp->ForceStrength = 10.0f;
 	RadialForceComp->bImpulseVelChange = true;
 	RadialForceComp->SetupAttachment(StaticMeshComp);
-	
+
+	EffectComp = CreateDefaultSubobject<UParticleSystemComponent>("EffectComp");
+	EffectComp->SetupAttachment(RootComponent);
 	
 }
 
@@ -33,6 +37,8 @@ void ASExplosiveBarrel::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	if(OtherComp->GetCollisionProfileName().Compare("Projectile") == 0)
 	{
 		RadialForceComp->FireImpulse();
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EffectComp->Template, RootComponent->GetComponentLocation());
+		Destroy();
 	}
 	//UE_LOG(LogTemp, Warning, TEXT("Barrel Hit!!"));
 }
