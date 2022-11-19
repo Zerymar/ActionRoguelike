@@ -9,6 +9,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class USInteractionComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ASCharacter : public ACharacter
@@ -32,6 +33,9 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
 
+	UPROPERTY(VisibleAnywhere)
+	USInteractionComponent* InteractionComp;
+	
 	bool bCharacterSprinting;
 
 	UPROPERTY(EditAnywhere)
@@ -48,6 +52,7 @@ protected:
 	void MoveRight(float Value);
 	void Sprint();
 	void PrimaryAttack();
+	void PrimaryInteract();
 
 
 public:	

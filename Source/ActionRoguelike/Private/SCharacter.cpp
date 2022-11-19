@@ -2,6 +2,8 @@
 
 
 #include "SCharacter.h"
+
+#include "SInteractionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -17,13 +19,15 @@ ASCharacter::ASCharacter()
 
 	// Allows camera movement
 	SpringArmComp->bUsePawnControlRotation = true;
-
 	SpringArmComp->SetupAttachment(RootComponent);
 
 	// Attach the SpringArmComponent to our CameraComponent
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
 
+	//Set up our interaction component
+	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
+	
 	//Allows for the camera to not always be locked? So it's not always strafing
 	// Allows orientation based on how the character is already moving, but based on camera
 	// See notes about "move in the direction relative to the acceleration"
@@ -102,6 +106,14 @@ void ASCharacter::PrimaryAttack()
 	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
 }
 
+void ASCharacter::PrimaryInteract()
+{
+	if(InteractionComp)
+	{
+		InteractionComp->PrimaryInteract();
+	}
+}
+
 
 // Called every frame
 void ASCharacter::Tick(float DeltaTime)
@@ -124,12 +136,16 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 	// When pressed, call the function PrimaryAttack
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
-
+	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ASCharacter::PrimaryInteract);
+	
 	//Allows the character to Jump
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASCharacter::Jump);
 
 	// Run Speed
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ASCharacter::Sprint);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ASCharacter::Sprint);
+
+	// Interact
+	
 }
 

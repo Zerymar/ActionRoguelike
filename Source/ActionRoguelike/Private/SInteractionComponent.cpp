@@ -3,6 +3,9 @@
 
 #include "SInteractionComponent.h"
 
+#include "SGameplayInterface.h"
+
+
 // Sets default values for this component's properties
 USInteractionComponent::USInteractionComponent()
 {
@@ -32,3 +35,38 @@ void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
+void USInteractionComponent::PrimaryInteract()
+{
+	// Only one query for now
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+
+	AActor* MyOwner = GetOwner();
+
+	// Copy values from ActorEyesViewPort into these veraiables
+	FVector EyeLocation;
+	FRotator EyeRotation;
+	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+	FVector End = EyeLocation + (EyeRotation.Vector() * 1000);
+
+	
+
+	// Find anything by world type dynamic
+	// Start from EyeLocation to End
+	// Apply the Hit Result
+	FHitResult Hit;
+	GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation, End, ObjectQueryParams);
+
+	// If something is hit
+	AActor* HitActor = Hit.GetActor();
+	if(HitActor)
+	{
+		// When implementing, use U and not I
+		if(HitActor->Implements<USGameplayInterface>())
+		{
+			APawn* MyPawn = Cast<APawn>(MyOwner);
+			ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
+		}
+	}
+}
