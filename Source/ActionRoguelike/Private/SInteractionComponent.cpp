@@ -4,7 +4,7 @@
 #include "SInteractionComponent.h"
 
 #include "SGameplayInterface.h"
-
+#include "DrawDebugHelpers.h"
 
 // Sets default values for this component's properties
 USInteractionComponent::USInteractionComponent()
@@ -55,18 +55,37 @@ void USInteractionComponent::PrimaryInteract()
 	// Find anything by world type dynamic
 	// Start from EyeLocation to End
 	// Apply the Hit Result
-	FHitResult Hit;
-	GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation, End, ObjectQueryParams);
+	//FHitResult Hit;
+	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation, End, ObjectQueryParams);
 
-	// If something is hit
-	AActor* HitActor = Hit.GetActor();
-	if(HitActor)
+	TArray<FHitResult> Hits;
+
+	float Radius = 30.0f;
+	FCollisionShape Shape;
+	Shape.SetSphere(Radius);
+	
+	// Sweeping -> "Moves" a sphere, tries to find overlaps
+	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(Hits, EyeLocation, End, FQuat::Identity, ObjectQueryParams, Shape);
+	FColor LineColor = bBlockingHit ? FColor::Green : FColor::Red;
+	
+	for(FHitResult Hit : Hits)
 	{
-		// When implementing, use U and not I
-		if(HitActor->Implements<USGameplayInterface>())
+		// If something is hit
+		AActor* HitActor = Hit.GetActor();
+		if(HitActor)
 		{
-			APawn* MyPawn = Cast<APawn>(MyOwner);
-			ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
+			// When implementing, use U and not I
+			if(HitActor->Implements<USGameplayInterface>())
+			{
+				APawn* MyPawn = Cast<APawn>(MyOwner);
+				ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
+			}
+
+			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32,LineColor, false, 2.0f);
 		}
 	}
+	
+	DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 2.0f, 0, 2.0f);
+
+	
 }

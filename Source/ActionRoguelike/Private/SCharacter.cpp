@@ -40,6 +40,9 @@ ASCharacter::ASCharacter()
 
 	// Hold onto the standard speed
 	CharacterMaxWalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+
+	// Attack inititialization
+	AttackDelay = 0.3f;
 }
 
 // Called when the game starts or when spawned
@@ -94,6 +97,20 @@ void ASCharacter::MoveRight(float Value)
 }
 
 void ASCharacter::PrimaryAttack()
+{
+
+	// Pass in animation
+	PlayAnimMontage(AttackAnim);
+
+	// Add a timer so the animation syncs with spawn
+	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, AttackDelay);
+
+	// If our character were to die, we want to clear out the timer
+	// GetWorldTimerManager().ClearTimer(TimerHandle_PrimaryAttack);
+
+}
+
+void ASCharacter::PrimaryAttack_TimeElapsed()
 {
 	// Gets the location of the hand to spawn the projectile
 	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
