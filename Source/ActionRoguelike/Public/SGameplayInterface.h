@@ -24,8 +24,9 @@ class ACTIONROGUELIKE_API ISGameplayInterface
 public:
 
 	//BlueprintImplementableEvent -> Only use if you plan to implement in the Blueprint UI and not C++
-	// BlueprintNativeEvent -> Expects C++ implementation but allows for Blueprint 
-	UFUNCTION(BlueprintNativeEvent)
+	// BlueprintNativeEvent -> Expects C++ implementation but allows for Blueprint
+	// BluePrintCallable allows us to call the function when in the blueprint editor
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Interact(APawn* InstigatorPawn);
 	
 };
