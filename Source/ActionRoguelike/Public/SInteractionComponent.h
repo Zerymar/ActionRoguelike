@@ -13,7 +13,7 @@ class ACTIONROGUELIKE_API USInteractionComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	void PrimaryInteract();
+	void PrimaryInteract(const FVector& Start,  const FRotator& Rotation, FCollisionObjectQueryParams ObjectQueryParams);
 
 public:	
 	// Sets default values for this component's properties

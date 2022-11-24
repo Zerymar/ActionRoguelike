@@ -7,12 +7,14 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bShowDebug = false;
 
 	// Attach the SCharacter to our SpringArmComponent
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>("SpringArmComp");
@@ -47,6 +49,8 @@ ASCharacter::ASCharacter()
 	// Attack inititialization
 	AttackDelay = 0.3f;
 }
+
+
 
 // Called when the game starts or when spawned
 void ASCharacter::BeginPlay()
@@ -107,11 +111,10 @@ void ASCharacter::PrimaryAttack()
 
 	// Add a timer so the animation syncs with spawn
 	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, AttackDelay);
-
-	// If our character were to die, we want to clear out the timer
-	// GetWorldTimerManager().ClearTimer(TimerHandle_PrimaryAttack);
-
+	
 }
+
+
 
 void ASCharacter::PrimaryAttack_TimeElapsed()
 {
@@ -119,35 +122,51 @@ void ASCharacter::PrimaryAttack_TimeElapsed()
 	{
 		// Gets the location of the hand to spawn the projectile
 		FVector SpawnLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-		FVector ImpactLocation;
-
 		
-		// Spawn relative to the control rotation and currently just spawn on the actor
-		FTransform SpawnTM = FTransform(CameraFieldOfView.Rotation,SpawnLocation );
-
 		
+		// Lets query for any hits with Dynamic/static
+		FVector ImpactLocation; 
+		FRotator SpawnRotator;
+		FCollisionObjectQueryParams ObjectQueryParams;
+		ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+		ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+
+		// Get the rotation to the closest "impact" Crosshair site
+		CrosshairImpactRelativeRotation(SpawnRotator, SpawnLocation, ImpactLocation, ObjectQueryParams);
+		
+		// Spawn projectile based on the rotation from the hand socket to its impact location
+		FTransform SpawnTM = FTransform(SpawnRotator,SpawnLocation );
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParams.Instigator = this;
-
 		
 		// Whenever we spawn, spawn to the world
 		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
-		// Debug
-		// Copy values from ActorEyesViewPort into these variables
-		FVector EyeLocation;
-		FRotator EyeRotation;
-		this->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
-		FVector DebugProjectileEnd = SpawnLocation + (EyeRotation.Vector() * 300);
-		DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, DebugProjectileEnd, 90.0f, FColor::Orange, false, 2.0f, 0, 2);
-
+		if( bShowDebug)
+		{
+			DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, ImpactLocation, 90.0f, FColor::Blue, false, 2.0f, 0, 2);
+		}
 		
-		
-		FVector DebugCrosshairEnd = CameraFieldOfView.Location + (CameraFieldOfView.Rotation.Vector() * 400);
-		DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, DebugCrosshairEnd, 90.0f, FColor::Blue, false, 2.0f, 0, 2);
+	}
+}
 
-		DrawDebugDirectionalArrow(GetWorld(), CameraFieldOfView.Location, DebugCrosshairEnd, 90.0f, FColor::White, false, 2.0f, 0, 2);
+void ASCharacter::CrosshairImpactRelativeRotation(FRotator& Rotator, const FVector& Start,  FVector& End,const FCollisionObjectQueryParams&  ObjectQueryParams)
+{
+	End = CameraFieldOfView.Location + (CameraFieldOfView.Rotation.Vector() * 1000);
+	Rotator = UKismetMathLibrary::FindLookAtRotation(Start, End);
+	
+	// Get our initial rotator without collision checking
+	FHitResult Hit;
+		
+	// Only care about first hit to reconfigure our rotator
+	GetWorld()->LineTraceSingleByObjectType(Hit, CameraFieldOfView.Location, End, ObjectQueryParams);
+
+	// If there was a hit, reconfigure our rotator
+	if(Hit.GetActor())
+	{
+		End = Hit.ImpactPoint;
+		Rotator = UKismetMathLibrary::FindLookAtRotation(Start, Hit.ImpactPoint);
 	}
 }
 
@@ -155,7 +174,13 @@ void ASCharacter::PrimaryInteract()
 {
 	if(InteractionComp)
 	{
-		InteractionComp->PrimaryInteract();
+		const FCollisionObjectQueryParams QueryParams;
+		FRotator CrosshairRotator;
+		FVector Start;
+		FVector End;
+		GetActorEyesViewPoint(Start, CrosshairRotator);
+		CrosshairImpactRelativeRotation(CrosshairRotator, Start, End, QueryParams);
+		InteractionComp->PrimaryInteract(Start, CrosshairRotator, QueryParams);
 	}
 }
 

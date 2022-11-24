@@ -35,6 +35,9 @@ public:
 	ASCharacter();
 
 protected:
+	void CrosshairImpactRelativeRotation(FRotator& Rotator, const FVector& Start, FVector& End,const FCollisionObjectQueryParams&  ObjectQueryParams);
+
+protected:
 	// Show the variables anywhere in the editor. Important for being able to modify in Editor
 	UPROPERTY(VisibleAnywhere)
 	USpringArmComponent* SpringArmComp;
@@ -52,6 +55,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	float CharacterMaxWalkSpeed ;
+
+	UPROPERTY(EditAnywhere)
+	bool bShowDebug;
 	
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -63,6 +69,7 @@ protected:
 	void PrimaryAttack();
 	void PrimaryAttack_TimeElapsed();
 	void PrimaryInteract();
+	
 
 
 public:	
