@@ -43,7 +43,7 @@ void USInteractionComponent::PrimaryInteract()
 
 	AActor* MyOwner = GetOwner();
 
-	// Copy values from ActorEyesViewPort into these veraiables
+	// Copy values from ActorEyesViewPort into these variables
 	FVector EyeLocation;
 	FRotator EyeRotation;
 	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);

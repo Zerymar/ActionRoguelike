@@ -27,7 +27,7 @@ protected:
 	float AttackDelay;
 	
 	FTimerHandle TimerHandle_PrimaryAttack;
-
+	FMinimalViewInfo CameraFieldOfView;
 
 	
 public:

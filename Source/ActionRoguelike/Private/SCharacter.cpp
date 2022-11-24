@@ -25,6 +25,9 @@ ASCharacter::ASCharacter()
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
 
+	//initialize field of view
+	CameraComp->GetCameraView(0, CameraFieldOfView);
+
 	//Set up our interaction component
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
 	
@@ -115,15 +118,36 @@ void ASCharacter::PrimaryAttack_TimeElapsed()
 	if(ensure(ProjectileClass))
 	{
 		// Gets the location of the hand to spawn the projectile
-		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		FVector SpawnLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		FVector ImpactLocation;
+
+		
 		// Spawn relative to the control rotation and currently just spawn on the actor
-		FTransform SpawnTM = FTransform(GetControlRotation(),HandLocation );
+		FTransform SpawnTM = FTransform(CameraFieldOfView.Rotation,SpawnLocation );
+
+		
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParams.Instigator = this;
-	
+
+		
 		// Whenever we spawn, spawn to the world
 		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+		// Debug
+		// Copy values from ActorEyesViewPort into these variables
+		FVector EyeLocation;
+		FRotator EyeRotation;
+		this->GetActorEyesViewPoint(EyeLocation, EyeRotation);
+
+		FVector DebugProjectileEnd = SpawnLocation + (EyeRotation.Vector() * 300);
+		DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, DebugProjectileEnd, 90.0f, FColor::Orange, false, 2.0f, 0, 2);
+
+		
+		
+		FVector DebugCrosshairEnd = CameraFieldOfView.Location + (CameraFieldOfView.Rotation.Vector() * 400);
+		DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, DebugCrosshairEnd, 90.0f, FColor::Blue, false, 2.0f, 0, 2);
+
+		DrawDebugDirectionalArrow(GetWorld(), CameraFieldOfView.Location, DebugCrosshairEnd, 90.0f, FColor::White, false, 2.0f, 0, 2);
 	}
 }
 
@@ -140,7 +164,7 @@ void ASCharacter::PrimaryInteract()
 void ASCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	CameraComp->GetCameraView(DeltaTime, CameraFieldOfView);
 }
 
 // Called to bind functionality to input
