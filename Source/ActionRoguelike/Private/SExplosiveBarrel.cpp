@@ -24,11 +24,19 @@ ASExplosiveBarrel::ASExplosiveBarrel()
 	RadialForceComp->ImpulseStrength = 2000.0f;
 	RadialForceComp->ForceStrength = 10.0f;
 	RadialForceComp->bImpulseVelChange = true;
+	RadialForceComp->SetAutoActivate(false);
+	RadialForceComp->AddCollisionChannelToAffect(ECC_WorldDynamic);
 	RadialForceComp->SetupAttachment(StaticMeshComp);
 
 	EffectComp = CreateDefaultSubobject<UParticleSystemComponent>("EffectComp");
 	EffectComp->SetupAttachment(RootComponent);
 	
+}
+
+void ASExplosiveBarrel::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	StaticMeshComp->OnComponentHit.AddDynamic(this, &ASExplosiveBarrel::OnHit);
 }
 
 void ASExplosiveBarrel::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -47,7 +55,7 @@ void ASExplosiveBarrel::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 void ASExplosiveBarrel::BeginPlay()
 {
 	Super::BeginPlay();
-	StaticMeshComp->OnComponentHit.AddDynamic(this, &ASExplosiveBarrel::OnHit);
+	
 }
 
 // Called every frame
