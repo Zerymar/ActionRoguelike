@@ -112,16 +112,19 @@ void ASCharacter::PrimaryAttack()
 
 void ASCharacter::PrimaryAttack_TimeElapsed()
 {
-	// Gets the location of the hand to spawn the projectile
-	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-	// Spawn relative to the control rotation and currently just spawn on the actor
-	FTransform SpawnTM = FTransform(GetControlRotation(),HandLocation );
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
+	if(ensure(ProjectileClass))
+	{
+		// Gets the location of the hand to spawn the projectile
+		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		// Spawn relative to the control rotation and currently just spawn on the actor
+		FTransform SpawnTM = FTransform(GetControlRotation(),HandLocation );
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Instigator = this;
 	
-	// Whenever we spawn, spawn to the world
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+		// Whenever we spawn, spawn to the world
+		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	}
 }
 
 void ASCharacter::PrimaryInteract()
