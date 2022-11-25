@@ -26,6 +26,8 @@ ASProjectile::ASProjectile()
 	MovementComp->bInitialVelocityInLocalSpace = true;
 
 	bDestroyOnHit = false;
+
+	
 	
 }
 
@@ -49,6 +51,7 @@ void ASProjectile::PostInitializeComponents()
 void ASProjectile::BeginPlay()
 {
 	Super::BeginPlay();
+	ProjectileOwner = GetInstigator();
 	
 }
 

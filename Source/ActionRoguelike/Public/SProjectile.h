@@ -17,6 +17,8 @@ class ACTIONROGUELIKE_API ASProjectile : public AActor
 protected:
 	UPROPERTY(EditAnywhere)
 	bool bDestroyOnHit;
+	
+	AActor* ProjectileOwner;
 public:
 	// Sets default values for this actor's properties
 	ASProjectile();
@@ -38,7 +40,7 @@ protected:
 
 	// Want to despawn when colliding
 	UFUNCTION()
-	void OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	virtual void OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
