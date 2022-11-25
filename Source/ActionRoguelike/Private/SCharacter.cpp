@@ -7,12 +7,14 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 ASCharacter::ASCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bShowDebug = false;
 
 	// Attach the SCharacter to our SpringArmComponent
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>("SpringArmComp");
@@ -24,6 +26,9 @@ ASCharacter::ASCharacter()
 	// Attach the SpringArmComponent to our CameraComponent
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
+
+	//initialize field of view
+	CameraComp->GetCameraView(0, CameraFieldOfView);
 
 	//Set up our interaction component
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
@@ -44,6 +49,8 @@ ASCharacter::ASCharacter()
 	// Attack inititialization
 	AttackDelay = 0.3f;
 }
+
+
 
 // Called when the game starts or when spawned
 void ASCharacter::BeginPlay()
@@ -96,39 +103,91 @@ void ASCharacter::MoveRight(float Value)
 	AddMovementInput(RightVector, Value);
 }
 
-void ASCharacter::PrimaryAttack()
+void ASCharacter::Attack(TSubclassOf<AActor> Projectile)
 {
 
 	// Pass in animation
 	PlayAnimMontage(AttackAnim);
-
+	CurrentProjectileClass = Projectile;
 	// Add a timer so the animation syncs with spawn
-	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ASCharacter::PrimaryAttack_TimeElapsed, AttackDelay);
-
-	// If our character were to die, we want to clear out the timer
-	// GetWorldTimerManager().ClearTimer(TimerHandle_PrimaryAttack);
+	GetWorldTimerManager().SetTimer(TimerHandle_Attack,this, &ASCharacter::ShootProjectile, 0.1f, false, AttackDelay); 
 
 }
 
-void ASCharacter::PrimaryAttack_TimeElapsed()
+void ASCharacter::Attack_TimeElapsed()
 {
-	// Gets the location of the hand to spawn the projectile
-	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-	// Spawn relative to the control rotation and currently just spawn on the actor
-	FTransform SpawnTM = FTransform(GetControlRotation(),HandLocation );
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
+	if(ensure(CurrentProjectileClass))
+	{
+		ShootProjectile();
+	}
+}
+
+void ASCharacter::CrosshairImpactRelativeRotation(FRotator& Rotator, const FVector& Start,  FVector& End,const FCollisionObjectQueryParams&  ObjectQueryParams, float Range)
+{
+	End = CameraLocation + (CameraFieldOfView.Rotation.Vector() * Range);
+	Rotator = UKismetMathLibrary::FindLookAtRotation(Start, End);
 	
-	// Whenever we spawn, spawn to the world
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	// Get our initial rotator without collision checking
+	FHitResult Hit;
+		
+	// Only care about first hit to reconfigure our rotator
+	GetWorld()->LineTraceSingleByObjectType(Hit, CameraLocation, End, ObjectQueryParams);
+
+	// If there was a hit, reconfigure our rotator
+	if(Hit.GetActor())
+	{
+		End = Hit.ImpactPoint;
+		Rotator = UKismetMathLibrary::FindLookAtRotation(Start, Hit.ImpactPoint);
+	}
+
+	if( bShowDebug)
+	{
+		DrawDebugDirectionalArrow(GetWorld(), CameraLocation, End, 90.0f, FColor::White, false, 2.0f, 0, 2);
+	}
 }
 
 void ASCharacter::PrimaryInteract()
 {
 	if(InteractionComp)
 	{
-		InteractionComp->PrimaryInteract();
+		const FCollisionObjectQueryParams QueryParams;
+		FRotator CrosshairRotator;
+		FVector Start;
+		FVector End;
+		const float InteractRange = 500;
+		GetActorEyesViewPoint(Start, CrosshairRotator);
+		CrosshairImpactRelativeRotation(CrosshairRotator, Start, End, QueryParams, InteractRange);
+		InteractionComp->PrimaryInteract(Start, End, CrosshairRotator, QueryParams, InteractRange);
+	}
+}
+
+void ASCharacter::ShootProjectile()
+{
+	// Gets the location of the hand to spawn the projectile
+	const FVector SpawnLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	
+	// Lets query for any hits with Dynamic/static
+	FVector ImpactLocation; 
+	FRotator SpawnRotator;
+	FCollisionObjectQueryParams ObjectQueryParams;
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+
+	// Get the rotation to the closest "impact" Crosshair site
+	CrosshairImpactRelativeRotation(SpawnRotator, SpawnLocation, ImpactLocation, ObjectQueryParams, 3000);
+		
+	// Spawn projectile based on the rotation from the hand socket to its impact location
+	const FTransform SpawnTM = FTransform(SpawnRotator,SpawnLocation );
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Instigator = this;
+		
+	// Whenever we spawn, spawn to the world
+	GetWorld()->SpawnActor<AActor>(CurrentProjectileClass, SpawnTM, SpawnParams);
+	
+	if( bShowDebug)
+	{
+		DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, ImpactLocation, 90.0f, FColor::Blue, false, 2.0f, 0, 2);
 	}
 }
 
@@ -137,7 +196,8 @@ void ASCharacter::PrimaryInteract()
 void ASCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	CameraComp->GetCameraView(DeltaTime, CameraFieldOfView);
+	CameraLocation = CameraFieldOfView.Location;
 }
 
 // Called to bind functionality to input
@@ -153,7 +213,9 @@ void ASCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	
 
 	// When pressed, call the function PrimaryAttack
-	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &ASCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction<FProjectileDelegate>("PrimaryAttack", IE_Pressed, this, &ASCharacter::Attack, PrimaryAttackProjectileClass);
+	PlayerInputComponent->BindAction<FProjectileDelegate>("SecondaryAttack", IE_Pressed, this, &ASCharacter::Attack, SecondaryAttackProjectileClass);
+	PlayerInputComponent->BindAction<FProjectileDelegate>("PrimaryUtility", IE_Pressed, this, &ASCharacter::Attack, UtilityProjectileClass);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ASCharacter::PrimaryInteract);
 	
 	//Allows the character to Jump

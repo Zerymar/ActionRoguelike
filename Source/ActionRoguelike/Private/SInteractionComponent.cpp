@@ -35,23 +35,13 @@ void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
-void USInteractionComponent::PrimaryInteract()
+void USInteractionComponent::PrimaryInteract(const FVector& Start, const FVector& End,  const FRotator& Rotation, FCollisionObjectQueryParams ObjectQueryParams, float Range)
 {
 	// Only one query for now
-	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 
 	AActor* MyOwner = GetOwner();
-
-	// Copy values from ActorEyesViewPort into these veraiables
-	FVector EyeLocation;
-	FRotator EyeRotation;
-	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-
-	FVector End = EyeLocation + (EyeRotation.Vector() * 1000);
-
 	
-
 	// Find anything by world type dynamic
 	// Start from EyeLocation to End
 	// Apply the Hit Result
@@ -65,7 +55,7 @@ void USInteractionComponent::PrimaryInteract()
 	Shape.SetSphere(Radius);
 	
 	// Sweeping -> "Moves" a sphere, tries to find overlaps
-	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(Hits, EyeLocation, End, FQuat::Identity, ObjectQueryParams, Shape);
+	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(Hits, Start, End, FQuat::Identity, ObjectQueryParams, Shape);
 	FColor LineColor = bBlockingHit ? FColor::Green : FColor::Red;
 	
 	for(FHitResult Hit : Hits)
@@ -81,11 +71,8 @@ void USInteractionComponent::PrimaryInteract()
 				ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
 			}
 
-			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32,LineColor, false, 2.0f);
+			//DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32,LineColor, false, 2.0f);
 		}
 	}
-	
-	DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 2.0f, 0, 2.0f);
-
-	
+	//DrawDebugLine(GetWorld(), Start, End, LineColor, false, 2.0f, 0, 2.0f);
 }
