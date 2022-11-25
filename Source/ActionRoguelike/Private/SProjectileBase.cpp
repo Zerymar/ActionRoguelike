@@ -1,18 +1,22 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SProjectile.h"
+#include "SProjectileBase.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
-ASProjectile::ASProjectile()
+ASProjectileBase::ASProjectileBase()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
 	SphereComp->SetCollisionProfileName("Projectile");
+	SphereComp->OnComponentHit.AddDynamic(this, &ASProjectileBase::OnActorHit);
+	
+	
 	// Our Project will be our "sphere object" in the world
 	RootComponent = SphereComp;
 
@@ -24,31 +28,40 @@ ASProjectile::ASProjectile()
 	MovementComp->InitialSpeed = 500.0f;
 	MovementComp->bRotationFollowsVelocity = true;
 	MovementComp->bInitialVelocityInLocalSpace = true;
+	MovementComp->ProjectileGravityScale = 0.0f;
 
-	bDestroyOnHit = false;
-
-	
-	
+	bDestroyOnHit = false;	
 }
 
-void ASProjectile::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ASProjectileBase::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	Explode();
 	//UE_LOG(LogTemp, Warning, TEXT("Projectile Collision, Destroying"));
-	if(bDestroyOnHit)
-	{
-		Destroy();
-	}
+
 }
 
-void ASProjectile::PostInitializeComponents()
+void ASProjectileBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	SphereComp->OnComponentHit.AddDynamic(this, &ASProjectile::OnActorHit);
+	
+}
+
+void ASProjectileBase::Explode_Implementation()
+{
+	// Check to make sure we are not already in the process of being 'destroyed'
+	if(ensure(!IsPendingKill()))
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(this, ImpactVFX, GetActorLocation(), GetActorRotation());
+		if(bDestroyOnHit)
+		{
+			Destroy();
+		}
+	}
 }
 
 
 // Called when the game starts or when spawned
-void ASProjectile::BeginPlay()
+void ASProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 	ProjectileOwner = GetInstigator();
@@ -56,7 +69,7 @@ void ASProjectile::BeginPlay()
 }
 
 // Called every frame
-void ASProjectile::Tick(float DeltaTime)
+void ASProjectileBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }

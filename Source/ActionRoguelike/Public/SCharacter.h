@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SProjectile.h"
+#include "SProjectileBase.h"
 #include "GameFramework/Character.h"
 #include "SCharacter.generated.h"
 
@@ -38,9 +38,6 @@ protected:
 	DECLARE_DELEGATE_OneParam(FProjectileDelegate, TSubclassOf<AActor>);
 	
 	FTimerHandle TimerHandle_Attack;
-	FMinimalViewInfo CameraFieldOfView;
-
-	FVector CameraLocation;
 
 	
 public:
@@ -79,11 +76,11 @@ protected:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void Sprint();
-	void Attack(TSubclassOf<AActor> Projectile);
+	void Attack(TSubclassOf<AActor> ClassToSpawn);
 	void Attack_TimeElapsed();
 	void PrimaryInteract();
 
-	void ShootProjectile();
+	void SpawnProjectile();
 	
 
 

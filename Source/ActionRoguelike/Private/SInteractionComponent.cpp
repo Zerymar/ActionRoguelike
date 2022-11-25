@@ -35,19 +35,12 @@ void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
-void USInteractionComponent::PrimaryInteract(const FVector& Start, const FVector& End,  const FRotator& Rotation, FCollisionObjectQueryParams ObjectQueryParams, float Range)
+void USInteractionComponent::PrimaryInteract(const FVector& Start, FVector& End,  const FRotator& Rotation, FCollisionObjectQueryParams ObjectQueryParams, float Range)
 {
 	// Only one query for now
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 
 	AActor* MyOwner = GetOwner();
-	
-	// Find anything by world type dynamic
-	// Start from EyeLocation to End
-	// Apply the Hit Result
-	//FHitResult Hit;
-	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation, End, ObjectQueryParams);
-
 	TArray<FHitResult> Hits;
 
 	float Radius = 30.0f;
@@ -70,9 +63,9 @@ void USInteractionComponent::PrimaryInteract(const FVector& Start, const FVector
 				APawn* MyPawn = Cast<APawn>(MyOwner);
 				ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
 			}
-
-			//DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32,LineColor, false, 2.0f);
+			End = Hit.ImpactPoint;
+			DrawDebugSphere(GetWorld(), End, Radius, 32,LineColor, false, 2.0f);
 		}
 	}
-	//DrawDebugLine(GetWorld(), Start, End, LineColor, false, 2.0f, 0, 2.0f);
+	DrawDebugLine(GetWorld(), Start, End, LineColor, false, 2.0f, 0, 2.0f);
 }

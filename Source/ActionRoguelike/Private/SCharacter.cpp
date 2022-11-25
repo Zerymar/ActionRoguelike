@@ -26,9 +26,7 @@ ASCharacter::ASCharacter()
 	// Attach the SpringArmComponent to our CameraComponent
 	CameraComp = CreateDefaultSubobject<UCameraComponent>("CameraComp");
 	CameraComp->SetupAttachment(SpringArmComp);
-
-	//initialize field of view
-	CameraComp->GetCameraView(0, CameraFieldOfView);
+	
 
 	//Set up our interaction component
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
@@ -110,7 +108,7 @@ void ASCharacter::Attack(TSubclassOf<AActor> Projectile)
 	PlayAnimMontage(AttackAnim);
 	CurrentProjectileClass = Projectile;
 	// Add a timer so the animation syncs with spawn
-	GetWorldTimerManager().SetTimer(TimerHandle_Attack,this, &ASCharacter::ShootProjectile, 0.1f, false, AttackDelay); 
+	GetWorldTimerManager().SetTimer(TimerHandle_Attack,this, &ASCharacter::SpawnProjectile, 0.1f, false, AttackDelay); 
 
 }
 
@@ -118,31 +116,7 @@ void ASCharacter::Attack_TimeElapsed()
 {
 	if(ensure(CurrentProjectileClass))
 	{
-		ShootProjectile();
-	}
-}
-
-void ASCharacter::CrosshairImpactRelativeRotation(FRotator& Rotator, const FVector& Start,  FVector& End,const FCollisionObjectQueryParams&  ObjectQueryParams, float Range)
-{
-	End = CameraLocation + (CameraFieldOfView.Rotation.Vector() * Range);
-	Rotator = UKismetMathLibrary::FindLookAtRotation(Start, End);
-	
-	// Get our initial rotator without collision checking
-	FHitResult Hit;
-		
-	// Only care about first hit to reconfigure our rotator
-	GetWorld()->LineTraceSingleByObjectType(Hit, CameraLocation, End, ObjectQueryParams);
-
-	// If there was a hit, reconfigure our rotator
-	if(Hit.GetActor())
-	{
-		End = Hit.ImpactPoint;
-		Rotator = UKismetMathLibrary::FindLookAtRotation(Start, Hit.ImpactPoint);
-	}
-
-	if( bShowDebug)
-	{
-		DrawDebugDirectionalArrow(GetWorld(), CameraLocation, End, 90.0f, FColor::White, false, 2.0f, 0, 2);
+		SpawnProjectile();
 	}
 }
 
@@ -150,44 +124,60 @@ void ASCharacter::PrimaryInteract()
 {
 	if(InteractionComp)
 	{
-		const FCollisionObjectQueryParams QueryParams;
-		FRotator CrosshairRotator;
-		FVector Start;
-		FVector End;
 		const float InteractRange = 500;
-		GetActorEyesViewPoint(Start, CrosshairRotator);
-		CrosshairImpactRelativeRotation(CrosshairRotator, Start, End, QueryParams, InteractRange);
-		InteractionComp->PrimaryInteract(Start, End, CrosshairRotator, QueryParams, InteractRange);
+		
+		const FCollisionObjectQueryParams QueryParams;
+		FRotator Rotator;
+		FVector Start;
+		FVector End = CameraComp->GetComponentLocation() + (GetControlRotation().Vector() * InteractRange);
+		GetActorEyesViewPoint(Start, Rotator);
+		InteractionComp->PrimaryInteract(Start, End, Rotator, QueryParams, InteractRange);
 	}
 }
 
-void ASCharacter::ShootProjectile()
+void ASCharacter::SpawnProjectile()
 {
 	// Gets the location of the hand to spawn the projectile
 	const FVector SpawnLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParameters.Instigator = this;
+
+	FCollisionShape Shape;
+	Shape.SetSphere(10.0f);
+	
+	// Ignore player
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
 	
 	// Lets query for any hits with Dynamic/static
-	FVector ImpactLocation; 
-	FRotator SpawnRotator;
 	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectQueryParams.AddObjectTypesToQuery(ECC_Pawn);
 
-	// Get the rotation to the closest "impact" Crosshair site
-	CrosshairImpactRelativeRotation(SpawnRotator, SpawnLocation, ImpactLocation, ObjectQueryParams, 3000);
-		
+	FVector TraceStart = CameraComp->GetComponentLocation();
+	FVector TraceEnd = CameraComp->GetComponentLocation() + (GetControlRotation().Vector() * 5000);
+
+	FHitResult Hit;
+	//Return true if we got to a blocking hit
+	if(GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjectQueryParams, Shape, Params))
+	{
+		TraceEnd = Hit.ImpactPoint;
+	}
+	
 	// Spawn projectile based on the rotation from the hand socket to its impact location
-	const FTransform SpawnTM = FTransform(SpawnRotator,SpawnLocation );
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
-		
+	// Find new direction/rotation from hand pointing to impact point in world
+	FRotator ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - SpawnLocation).Rotator();
+
+	FTransform SpawnTM = FTransform(ProjRotation, SpawnLocation);
 	// Whenever we spawn, spawn to the world
-	GetWorld()->SpawnActor<AActor>(CurrentProjectileClass, SpawnTM, SpawnParams);
+	GetWorld()->SpawnActor<AActor>(CurrentProjectileClass, SpawnTM, SpawnParameters);
 	
 	if( bShowDebug)
 	{
-		DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, ImpactLocation, 90.0f, FColor::Blue, false, 2.0f, 0, 2);
+		DrawDebugDirectionalArrow(GetWorld(), SpawnLocation, TraceEnd, 90.0f, FColor::Blue, false, 2.0f, 0, 2);
 	}
 }
 
@@ -196,8 +186,6 @@ void ASCharacter::ShootProjectile()
 void ASCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	CameraComp->GetCameraView(DeltaTime, CameraFieldOfView);
-	CameraLocation = CameraFieldOfView.Location;
 }
 
 // Called to bind functionality to input

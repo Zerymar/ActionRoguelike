@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "SProjectile.generated.h"
+#include "SProjectileBase.generated.h"
 class USphereComponent;
 class UProjectileMovementComponent;
 class UParticleSystemComponent;
 
 UCLASS()
-class ACTIONROGUELIKE_API ASProjectile : public AActor
+class ACTIONROGUELIKE_API ASProjectileBase : public AActor
 {
 	GENERATED_BODY()
 
@@ -21,22 +21,25 @@ protected:
 	AActor* ProjectileOwner;
 public:
 	// Sets default values for this actor's properties
-	ASProjectile();
+	ASProjectileBase();
 
 protected:
 	
 	// For collision, use a sphere component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	USphereComponent* SphereComp;
 
 	// Movement Component that gives an object velocity to go in a straight line
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UProjectileMovementComponent* MovementComp;
 
 	//Particle system component
 	// TO show something in the world.
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UParticleSystemComponent* EffectComp;
+
+	UPROPERTY(EditDefaultsOnly,Category="Effects", BlueprintReadOnly)
+	UParticleSystem* ImpactVFX;
 
 	// Want to despawn when colliding
 	UFUNCTION()
@@ -45,6 +48,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	void Explode();
 	
 public:
 	// Called every frame
