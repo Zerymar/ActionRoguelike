@@ -24,11 +24,18 @@ ASProjectile::ASProjectile()
 	MovementComp->InitialSpeed = 500.0f;
 	MovementComp->bRotationFollowsVelocity = true;
 	MovementComp->bInitialVelocityInLocalSpace = true;
+
+	bDestroyOnHit = false;
+	
 }
+
 void ASProjectile::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	//UE_LOG(LogTemp, Warning, TEXT("Projectile Collision, Destroying"));
-	Destroy();
+	if(bDestroyOnHit)
+	{
+		Destroy();
+	}
 }
 
 void ASProjectile::PostInitializeComponents()

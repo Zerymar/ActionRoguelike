@@ -10,6 +10,7 @@ ASMagicProjectile::ASMagicProjectile()
 	// Our magic projectile should be faster than the default 500.0f
 	MovementComp->InitialSpeed = 2000.0f;
 
+	bDestroyOnHit = true;
 }
 /*
 void ASMagicProjectile::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

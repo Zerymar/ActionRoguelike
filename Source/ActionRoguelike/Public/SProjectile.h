@@ -14,6 +14,9 @@ class ACTIONROGUELIKE_API ASProjectile : public AActor
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(EditAnywhere)
+	bool bDestroyOnHit;
 public:
 	// Sets default values for this actor's properties
 	ASProjectile();
