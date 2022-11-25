@@ -3,6 +3,7 @@
 
 #include "SCharacter.h"
 
+#include "SAttributeComponent.h"
 #include "SInteractionComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -28,8 +29,11 @@ ASCharacter::ASCharacter()
 	CameraComp->SetupAttachment(SpringArmComp);
 	
 
-	//Set up our interaction component
+	//Set up our custom components
 	InteractionComp = CreateDefaultSubobject<USInteractionComponent>("InteractionComp");
+
+	AttributeComp = CreateDefaultSubobject<USAttributeComponent>("AttributeComp");
+	
 	
 	//Allows for the camera to not always be locked? So it's not always strafing
 	// Allows orientation based on how the character is already moving, but based on camera

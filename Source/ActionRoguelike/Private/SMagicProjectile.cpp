@@ -2,6 +2,9 @@
 
 
 #include "SMagicProjectile.h"
+
+#include "SAttributeComponent.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
@@ -9,9 +12,27 @@ ASMagicProjectile::ASMagicProjectile()
 {
 	// Our magic projectile should be faster than the default 500.0f
 	MovementComp->InitialSpeed = 2000.0f;
-
+	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ASMagicProjectile::OnActorOverlap);
+	
 	bDestroyOnHit = true;
+	
 }
+
+void ASMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult)
+{
+	if(OtherActor)
+	{
+		// Iterate through all components, find the attributecomponent
+		//Cast it to ensure that's what we get
+		USAttributeComponent* AttributeComp = Cast<USAttributeComponent>(OtherActor->GetComponentByClass(USAttributeComponent::StaticClass()));
+		if(AttributeComp)
+		{
+			AttributeComp->ApplyHealthChange(-20.0f);
+			Explode();
+		}
+	}
+}
+
 /*
 void ASMagicProjectile::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
@@ -23,8 +44,11 @@ void ASMagicProjectile::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherAc
 void ASMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	
+}
+
+void ASMagicProjectile::LifeSpanExpired()
+{
+	Explode();
 }
 
 // Called every frame

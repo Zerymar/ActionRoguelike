@@ -57,6 +57,7 @@ void ASTeleportProjectile::TeleportInstigator()
 	}
 }
 
+
 void ASTeleportProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

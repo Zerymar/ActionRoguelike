@@ -12,6 +12,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class USInteractionComponent;
 class UAnimMontage;
+class USAttributeComponent;
 UCLASS()
 class ACTIONROGUELIKE_API ASCharacter : public ACharacter
 {
@@ -65,6 +66,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	float CharacterMaxWalkSpeed ;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	USAttributeComponent* AttributeComp;
 
 	UPROPERTY(EditAnywhere)
 	bool bShowDebug;
