@@ -35,14 +35,12 @@ void USInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
-void USInteractionComponent::PrimaryInteract(const FVector& Start,  const FRotator& Rotation, FCollisionObjectQueryParams ObjectQueryParams)
+void USInteractionComponent::PrimaryInteract(const FVector& Start, const FVector& End,  const FRotator& Rotation, FCollisionObjectQueryParams ObjectQueryParams, float Range)
 {
 	// Only one query for now
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 
 	AActor* MyOwner = GetOwner();
-	FVector End = Start + (Rotation.Vector() * 1000);
-
 	
 	// Find anything by world type dynamic
 	// Start from EyeLocation to End
@@ -69,16 +67,12 @@ void USInteractionComponent::PrimaryInteract(const FVector& Start,  const FRotat
 			// When implementing, use U and not I
 			if(HitActor->Implements<USGameplayInterface>())
 			{
-				
 				APawn* MyPawn = Cast<APawn>(MyOwner);
 				ISGameplayInterface::Execute_Interact(HitActor, MyPawn);
 			}
 
-			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32,LineColor, false, 2.0f);
+			//DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32,LineColor, false, 2.0f);
 		}
 	}
-	
-	DrawDebugLine(GetWorld(), Start, End, LineColor, false, 2.0f, 0, 2.0f);
-
-	
+	//DrawDebugLine(GetWorld(), Start, End, LineColor, false, 2.0f, 0, 2.0f);
 }

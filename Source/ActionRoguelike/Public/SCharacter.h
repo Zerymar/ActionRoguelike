@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SProjectile.h"
 #include "GameFramework/Character.h"
 #include "SCharacter.generated.h"
 
@@ -21,13 +22,25 @@ protected:
 	UAnimMontage* AttackAnim;
 	// Assigns from a class, MagicProjectile derives AActor
 	UPROPERTY(EditAnywhere, Category="Attack")
-	TSubclassOf<AActor> ProjectileClass;
+	TSubclassOf<AActor> PrimaryAttackProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category="Attack")
+	TSubclassOf<AActor> SecondaryAttackProjectileClass;
 
 	UPROPERTY(EditAnywhere, Category="Attack")
 	float AttackDelay;
 	
-	FTimerHandle TimerHandle_PrimaryAttack;
+	UPROPERTY(EditAnywhere, Category="Utility")
+	TSubclassOf<AActor> UtilityProjectileClass;
+
+	TSubclassOf<AActor> CurrentProjectileClass;
+	
+	DECLARE_DELEGATE_OneParam(FProjectileDelegate, TSubclassOf<AActor>);
+	
+	FTimerHandle TimerHandle_Attack;
 	FMinimalViewInfo CameraFieldOfView;
+
+	FVector CameraLocation;
 
 	
 public:
@@ -35,7 +48,7 @@ public:
 	ASCharacter();
 
 protected:
-	void CrosshairImpactRelativeRotation(FRotator& Rotator, const FVector& Start, FVector& End,const FCollisionObjectQueryParams&  ObjectQueryParams);
+	void CrosshairImpactRelativeRotation(FRotator& Rotator, const FVector& Start, FVector& End,const FCollisionObjectQueryParams&  ObjectQueryParams, float Range);
 
 protected:
 	// Show the variables anywhere in the editor. Important for being able to modify in Editor
@@ -66,9 +79,11 @@ protected:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void Sprint();
-	void PrimaryAttack();
-	void PrimaryAttack_TimeElapsed();
+	void Attack(TSubclassOf<AActor> Projectile);
+	void Attack_TimeElapsed();
 	void PrimaryInteract();
+
+	void ShootProjectile();
 	
 
 

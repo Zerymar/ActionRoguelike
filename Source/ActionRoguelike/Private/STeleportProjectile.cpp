@@ -38,9 +38,8 @@ void ASTeleportProjectile::SpawnEmitter()
 	// Destroy our base effect, no longer needed
 	EffectComp->DestroyComponent();
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EmitterEffectComp->Template, RootComponent->GetComponentLocation());
-
 	
-	GetWorldTimerManager().SetTimer(TeleportTimerHandle, this, &ASTeleportProjectile::TeleportInstigator, 0.05f, false, TeleportAfterExplodeDelay);
+	GetWorldTimerManager().SetTimer(TeleportTimerHandle, this, &ASTeleportProjectile::TeleportInstigator, 0.1f, false, TeleportAfterExplodeDelay);
 	
 }
 
