@@ -34,4 +34,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void Interact(APawn* InstigatorPawn);
 	
+	// If we were doing a pure C++ implementation, this function would have to be virtual:
+	// virtual void Interact(APawn* InstigatorPawn);
+	
 };
