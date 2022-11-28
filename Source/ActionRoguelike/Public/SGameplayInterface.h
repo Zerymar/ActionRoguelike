@@ -14,7 +14,12 @@ class USGameplayInterface : public UInterface
 };
 
 /**
- * 
+ * Interface classes are useful for ensuring that a set of (potentially) unrelated classes implement a common set of functions.
+ * This is very useful in cases where some game functionality may be shared by large, complex classes that are otherwise dissimilar. 
+ * For example, a game might have a system whereby entering a trigger volume can activate traps, alert enemies, or award points to the player. 
+ * This might be implemented by a "ReactToTrigger" function on traps, enemies, and point-awarders. However, traps may be derived from AActor, 
+ * enemies from a specialized APawn or ACharacter subclass, and point-awards from UDataAsset. All of these classes need shared functionality, 
+ * but have no common ancestor other than UObject. In this case, an interface is recommended.
  */
 class ACTIONROGUELIKE_API ISGameplayInterface
 {
