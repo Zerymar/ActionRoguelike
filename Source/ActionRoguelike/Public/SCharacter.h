@@ -40,13 +40,16 @@ protected:
 	
 	FTimerHandle TimerHandle_Attack;
 
+	UFUNCTION()
+	void OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);
+
+	virtual void PostInitializeComponents() override;
+
 	
 public:
 	// Sets default values for this character's properties
 	ASCharacter();
 
-protected:
-	void CrosshairImpactRelativeRotation(FRotator& Rotator, const FVector& Start, FVector& End,const FCollisionObjectQueryParams&  ObjectQueryParams, float Range);
 
 protected:
 	// Show the variables anywhere in the editor. Important for being able to modify in Editor

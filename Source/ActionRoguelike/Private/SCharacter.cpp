@@ -11,6 +11,8 @@
 #include "Kismet/KismetMathLibrary.h"
 
 
+
+
 // Sets default values
 ASCharacter::ASCharacter()
 {
@@ -51,6 +53,23 @@ ASCharacter::ASCharacter()
 
 	// Attack inititialization
 	AttackDelay = 0.3f;
+}
+void ASCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	AttributeComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
+}
+
+
+void ASCharacter::OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth,
+	float Delta)
+{
+	if (NewHealth <= 0.0f && Delta < 0.0f)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		DisableInput(PC);
+	}
 }
 
 
