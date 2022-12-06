@@ -11,7 +11,6 @@ USAttributeComponent::USAttributeComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
-
 	Health = 100;
 }
 
