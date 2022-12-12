@@ -2,6 +2,8 @@
 
 
 #include "SProjectileBase.h"
+
+#include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -30,6 +32,7 @@ ASProjectileBase::ASProjectileBase()
 	MovementComp->bInitialVelocityInLocalSpace = true;
 	MovementComp->ProjectileGravityScale = 0.0f;
 
+	AudioComp = CreateDefaultSubobject<UAudioComponent>("AudioComp");
 	bDestroyOnHit = false;	
 }
 
@@ -65,6 +68,12 @@ void ASProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 	ProjectileOwner = GetInstigator();
+	AudioComp->SetWorldLocation(GetActorLocation());
+	
+	if(!AudioComp->IsPlaying())
+	{
+		AudioComp->Play();
+	}
 	
 }
 

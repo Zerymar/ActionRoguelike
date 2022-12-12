@@ -8,6 +8,7 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 class UParticleSystemComponent;
+class UAudioComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ASProjectileBase : public AActor
@@ -40,6 +41,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly,Category="Effects", BlueprintReadOnly)
 	UParticleSystem* ImpactVFX;
+	
+	// Our audio component for every projectile
+	UPROPERTY(EditDefaultsOnly, Category="Effects", BlueprintReadOnly)
+	UAudioComponent* AudioComp;
 
 	// Want to despawn when colliding
 	UFUNCTION()
