@@ -32,29 +32,30 @@ ASProjectileBase::ASProjectileBase()
 	MovementComp->bInitialVelocityInLocalSpace = true;
 	MovementComp->ProjectileGravityScale = 0.0f;
 
-	AudioComp = CreateDefaultSubobject<UAudioComponent>("AudioComp");
-	bDestroyOnHit = false;	
+	LoopingAudioComp = CreateDefaultSubobject<UAudioComponent>("LoopingAudioComp");
+	bDestroyOnHit = false;
 }
 
 void ASProjectileBase::OnActorHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Explode();
 	//UE_LOG(LogTemp, Warning, TEXT("Projectile Collision, Destroying"));
-
 }
 
 void ASProjectileBase::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	
+	//destroy component once audio finishes
 }
 
 void ASProjectileBase::Explode_Implementation()
 {
 	// Check to make sure we are not already in the process of being 'destroyed'
-	if(ensure(!IsPendingKill()))
+	if(ensure(IsValid(this)))
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(this, ImpactVFX, GetActorLocation(), GetActorRotation());
+		UGameplayStatics::SpawnSoundAtLocation(this, ImpactSFX, GetActorLocation(), GetActorRotation());
+		//ImpactAudioComponent->Play();
 		if(bDestroyOnHit)
 		{
 			Destroy();
@@ -67,12 +68,11 @@ void ASProjectileBase::Explode_Implementation()
 void ASProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
+
 	ProjectileOwner = GetInstigator();
-	AudioComp->SetWorldLocation(GetActorLocation());
-	
-	if(!AudioComp->IsPlaying())
+	if(!LoopingAudioComp->IsPlaying())
 	{
-		AudioComp->Play();
+		LoopingAudioComp->Play();
 	}
 	
 }
@@ -81,5 +81,9 @@ void ASProjectileBase::BeginPlay()
 void ASProjectileBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(LoopingAudioComp->IsPlaying())
+	{
+		LoopingAudioComp->SetWorldLocation(GetActorLocation());
+	}
 }
 

@@ -13,6 +13,7 @@ class UCameraComponent;
 class USInteractionComponent;
 class UAnimMontage;
 class USAttributeComponent;
+class UParticleSystem;
 UCLASS()
 class ACTIONROGUELIKE_API ASCharacter : public ACharacter
 {
@@ -39,6 +40,9 @@ protected:
 	DECLARE_DELEGATE_OneParam(FProjectileDelegate, TSubclassOf<AActor>);
 	
 	FTimerHandle TimerHandle_Attack;
+
+	UPROPERTY(EditDefaultsOnly,Category="Effects", BlueprintReadOnly)
+	UParticleSystem* MuzzleVFX;
 
 	UFUNCTION()
 	void OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);
