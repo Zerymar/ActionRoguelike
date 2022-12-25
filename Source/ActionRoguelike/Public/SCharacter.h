@@ -42,7 +42,7 @@ protected:
 	FTimerHandle TimerHandle_Attack;
 
 	UPROPERTY(EditDefaultsOnly,Category="Effects", BlueprintReadOnly)
-	UParticleSystem* MuzzleVFX;
+	UParticleSystem* MuzzleVfx;
 
 	UFUNCTION()
 	void OnHealthChanged(AActor* InstigatorActor, USAttributeComponent* OwningComp, float NewHealth, float Delta);

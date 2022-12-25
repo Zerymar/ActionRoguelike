@@ -131,7 +131,7 @@ void ASCharacter::Attack(TSubclassOf<AActor> Projectile)
 
 	// Pass in animation
 	PlayAnimMontage(AttackAnim);
-	CurrentProjectileClass = Projectile;
+		CurrentProjectileClass = Projectile;
 	// Add a timer so the animation syncs with spawn
 	GetWorldTimerManager().SetTimer(TimerHandle_Attack,this, &ASCharacter::SpawnProjectile, 0.1f, false, AttackDelay); 
 
@@ -141,7 +141,6 @@ void ASCharacter::Attack_TimeElapsed()
 {
 	if(ensure(CurrentProjectileClass))
 	{
-		UGameplayStatics::SpawnEmitterAttached(MuzzleVFX, this);
 		SpawnProjectile();
 	}
 }
@@ -163,9 +162,12 @@ void ASCharacter::PrimaryInteract()
 
 void ASCharacter::SpawnProjectile()
 {
+	// Spawn our muzzle
 	// Gets the location of the hand to spawn the projectile
 	const FVector SpawnLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-
+	const FRotator SpawnRotation = GetMesh()->GetSocketRotation("Muzzle_01");
+	UGameplayStatics::SpawnEmitterAttached(MuzzleVfx, GetMesh(), "HandMuzzle",SpawnLocation, SpawnRotation, EAttachLocation::KeepWorldPosition);
+	
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	SpawnParameters.Instigator = this;
